@@ -31,7 +31,16 @@ playing with different ideas of how to do so.
 """
 
 image_file = "data/all"
-modified_truth_file = "data/combined_truth.csv"
+train_dir = "data/train"
+test_dir = "data/test"
+valid_dir = "data/validation"
+train_truth_file = "data/train_truth.csv"
+test_truth_file = "data/test_truth.csv"
+valid_truth_file = "data/validation_truth.csv"
+modified_truth_file = "data/combined_truth_1.csv"
+modified_train_truth_file = "data/train_truth_1.csv"
+modified_test_truth_file = "data/test_truth_1.csv"
+modified_valid_truth_file = "data/validation_truth.csv"
 raw_truth_file = "data/all.csv"
 
 """
@@ -39,9 +48,9 @@ Adds a truth column to the groundTruth csv file. This column contains a
 number in range  [0,2] depending on what classification it is and returns it as 
 the Modified csv file. 
 """
-def add_truth_column():
-    df = pd.read_csv(raw_truth_file)
-    output_file = modified_truth_file
+def add_truth_column(raw, modified):
+    df = pd.read_csv(raw)
+    output_file = modified
     print(df.shape)
     df.insert(len(df.columns), "truth", NEITHER)
     for index, row in df.iterrows():
@@ -54,6 +63,10 @@ def add_truth_column():
             df.at[index, 'truth'] = SEB
 
     df.to_csv(output_file)
+
+#add_truth_column(train_truth_file, modified_train_truth_file)
+#add_truth_column(test_truth_file, modified_test_truth_file)
+#add_truth_column(valid_truth_file, modified_valid_truth_file)
 
 transforms = transforms.Compose([
     transforms.Resize((image_width, image_height)),
@@ -96,13 +109,31 @@ class DataSet17(Dataset) :
         return len(self.img_labels)
 
 #Add your own address for the dataset on your computer here 
+#dataset = DataSet17(
+#    annotations_file = modified_truth_file,
+#    img_dir = image_file)
+
+#Split in to train, test and validation data
 train_dataset = DataSet17(
-    annotations_file = modified_truth_file,
-    img_dir = image_file)
-print(len(train_dataset))
+    annotations_file = modified_train_truth_file,
+    img_dir = train_dir)
+test_dataset = DataSet17(
+    annotations_file = modified_test_truth_file,
+    img_dir = test_dir)
+valid_dataset = DataSet17(
+    annotations_file = modified_valid_truth_file,
+    img_dir = valid_dir)
+#Check the size of the data set
+print("Train size: ", len(train_dataset))
+print("Test size: ", len(test_dataset))
+print("Validation size: ", len(valid_dataset))
+
+#exit(1)
 
 # Testing that have correctly loaded data
-img, label = train_dataset[1]
+train_img, train_label = train_dataset[1]
+test_img, test_label = test_dataset[1]
+valid_img, valid_label = valid_dataset[1]
 #img.show()
 
 # Device configuration
@@ -118,7 +149,13 @@ learning_rate = 0.001
 train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
                                            batch_size=batch_size, 
                                            shuffle=True)
-
+test_loader = torch.utils.data.DataLoader(dataset=test_dataset,
+                                             batch_size=batch_size, 
+                                             shuffle=False)
+valid_loader = torch.utils.data.DataLoader(dataset=valid_dataset,
+                                                batch_size=batch_size, 
+                                                shuffle=False)
+ 
 class ConvNetModel_1(nn.Module):
     def __init__(self, num_classes = 3):
         super(ConvNetModel_1, self).__init__()
@@ -136,20 +173,17 @@ class ConvNetModel_1(nn.Module):
         self.fc = nn.Linear(64*64*32, num_classes)
         
     def forward(self, x):
-        print("STARTING :")
-        print(x.shape)
+        #print("STARTING :")
+        #print(x.shape)
         out = self.layer1(x)
-        print(out.shape)
+        #print(out.shape)
         out = self.layer2(out)
-        print(out.shape)
+        #print(out.shape)
         out = out.reshape(out.size(0), -1)
         out = self.fc(out)
-        print(out.shape)
-        print("END")
+        #print(out.shape)
+        #print("END")
         return out
-
-
-
 
 model = ConvNetModel_1(num_classes).to(device)
 
@@ -160,6 +194,8 @@ optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 # Train the model
 total_step = len(train_loader)
 for epoch in range(num_epochs):
+    total_correct = 0
+    total_total = 0
     for i, (images, labels) in enumerate(train_loader):
         images = images.to(device)
         labels = labels.to(device)
@@ -181,5 +217,36 @@ for epoch in range(num_epochs):
         _, predicted = torch.max(outputs.data, 1)
         total = labels.size(0)
         correct = (predicted == labels).sum().item()
+        total_total += total
+        total_correct += correct
+    print(f'Accuracy of the network on the {total_total} train images: {100 * total_correct // total_total} %')
+    
+    # Test the model
+    with torch.no_grad():
+        correct = 0
+        total = 0
+        for images, labels in test_loader:
+            images = images.to(device)
+            labels = labels.to(device)
+            outputs = model(images)
+            _, predicted = torch.max(outputs.data, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
+        
         print(f'Accuracy of the network on the {total} test images: {100 * correct // total} %')
+        
+
+#Validate the model
+with torch.no_grad():
+    correct = 0
+    total = 0
+    for images, labels in valid_loader:
+        images = images.to(device)
+        labels = labels.to(device)
+        outputs = model(images)
+        _, predicted = torch.max(outputs.data, 1)
+        total += labels.size(0)
+        correct += (predicted == labels).sum().item()
+    
+    print(f'Accuracy of the network on the {total} validation images: {100 * correct // total} %')
         
