@@ -11,16 +11,27 @@ from torchvision import transforms
 # 2 - seb 
 
 """
+I had to seperate the images from superpixel images in the training data file using
+mv ISIC_*******.png images
+"""
+"""
+Add the address for the ground truth csv file on your computer here - we should do this more neatly later 
+but it was taking wayyy too long to just upload the dataset with the code to git and I took wayyy too long
+playing with different ideas of how to do so. 
+"""
+
+image_file = "/Users/katieoreilly/Desktop/UNSW/ISIC-2017_Training_Data_2/images"
+raw_truth_file = "/Users/katieoreilly/Desktop/UNSW/ISIC-2017_Training_Part3_ModifiedGroundTruth.csv"
+modified_truth_file = "/Users/katieoreilly/Desktop/UNSW/ISIC-2017_Training_Part3_GroundTruth.csv"
+
+"""
 Adds a truth column to the groundTruth csv file. This column contains a 
 number in range  [0,2] depending on what classification it is and returns it as 
 the Modified csv file. 
 """
 def add_truth_column():
-    #add the address for the ground truth csv file on your computer here - we should do this more neatly later 
-    #but it was taking wayyy too long to just upload the dataset with the code to git and I took wayyy too long
-    #playing with different ideas of how to do so. 
-    df = pd.read_csv("/Users/katieoreilly/Desktop/UNSW/COMP9444/ISIC-2017_Training_Data/ISIC-2017_Training_Part3_GroundTruth.csv")
-    output_file = "/Users/katieoreilly/Desktop/UNSW/COMP9444/ISIC-2017_Training_Data/ISIC-2017_Training_Part3_ModifiedGroundTruth.csv"
+    df = pd.read_csv(raw_truth_file)
+    output_file = modified_truth_file
     print(df.shape)
     df.insert(len(df.columns), "truth", 0)
     for index, row in df.iterrows():
@@ -68,8 +79,8 @@ class DataSet17(Dataset) :
 
 #Add your own address for the dataset on your computer here 
 train_dataset = DataSet17(
-    annotations_file = "/Users/katieoreilly/Desktop/UNSW/COMP9444/ISIC-2017_Training_Data/ISIC-2017_Training_Part3_ModifiedGroundTruth.csv",
-    img_dir = "/Users/katieoreilly/Desktop/UNSW/COMP9444/ISIC-2017_Training_Data/images")
+    annotations_file = modified_truth_file,
+    img_dir = image_file)
 
 # Testing that have correctly loaded data
 img, label, height, width = train_dataset[33]
