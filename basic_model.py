@@ -30,9 +30,9 @@ but it was taking wayyy too long to just upload the dataset with the code to git
 playing with different ideas of how to do so. 
 """
 
-image_file = "/Users/katieoreilly/Desktop/UNSW/ISIC-2017_Training_Data_2/images"
-modified_truth_file = "/Users/katieoreilly/Desktop/UNSW/ISIC-2017_Training_Part3_ModifiedGroundTruth.csv"
-raw_truth_file = "/Users/katieoreilly/Desktop/UNSW/ISIC-2017_Training_Part3_GroundTruth.csv"
+image_file = "data/all"
+modified_truth_file = "data/combined_truth.csv"
+raw_truth_file = "data/all.csv"
 
 """
 Adds a truth column to the groundTruth csv file. This column contains a 
@@ -58,6 +58,7 @@ def add_truth_column():
 transforms = transforms.Compose([
     transforms.Resize((image_width, image_height)),
     transforms.ToTensor()
+    #Save the images in a file
 ])
 
 """
@@ -92,12 +93,13 @@ class DataSet17(Dataset) :
             print(f"Error loading image {img_path} at index {index}: {e}")
             raise e
     def __len__(self) :
-        return len(self.img_dir) 
+        return len(self.img_labels)
 
 #Add your own address for the dataset on your computer here 
 train_dataset = DataSet17(
     annotations_file = modified_truth_file,
     img_dir = image_file)
+print(len(train_dataset))
 
 # Testing that have correctly loaded data
 img, label = train_dataset[1]
@@ -107,7 +109,7 @@ img, label = train_dataset[1]
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 #Hyper parameters 
-num_epochs = 5 
+num_epochs = 10
 num_classes = 3 
 batch_size = 50 
 learning_rate = 0.001 
@@ -171,5 +173,13 @@ for epoch in range(num_epochs):
         loss.backward()
         optimizer.step()
         
-        if (i+1) % 100 == 0:
-            print ('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}' .format(epoch+1, num_epochs, i+1, total_step, loss.item()))
+        #if (i+1) % 100 == 0:
+        #print ('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}' .format(epoch+1, num_epochs, i+1, total_step, loss.item()))
+        print(f"Epoch [{epoch+1}/{num_epochs}], Step [{i+1}/{total_step}], Loss: {loss.item():.4f}")
+        
+        #Check accuracy
+        _, predicted = torch.max(outputs.data, 1)
+        total = labels.size(0)
+        correct = (predicted == labels).sum().item()
+        print(f'Accuracy of the network on the {total} test images: {100 * correct // total} %')
+        
