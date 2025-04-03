@@ -23,16 +23,6 @@ SEB = 2
 image_width = 128
 image_height = 128 
 
-
-"""
-I had to seperate the images from superpixel images in the training data file using
-mv ISIC_*******.png images
-
-Add the address for the ground truth csv file on your computer here - we should do this more neatly later 
-but it was taking wayyy too long to just upload the dataset with the code to git and I took wayyy too long
-playing with different ideas of how to do so. 
-"""
-
 image_file = "data/all"
 train_dir = "data/train"
 test_dir = "data/test"
@@ -80,10 +70,6 @@ transforms = v2.Compose([
     #Save the images in a file
 ])
 
-"""
-Loads the data for the 2017 data set. We can add transforms for the targets and images later.
-Note that I proabably should have put the modifications to the ground truth csv file in here 
-but I didnt think of doing that when I was coding it. """
 #Data loader for 2017 data set 
 class DataSet17(Dataset) :
     # annotations_file: csv file containing ground truth for each image 
