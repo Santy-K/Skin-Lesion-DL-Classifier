@@ -7,3 +7,4 @@ data/train/*
 !data/train/.gitkeep
 data/validation/*
 !data/validation/.gitkeep
+.DS_Store
