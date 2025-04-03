@@ -4,25 +4,35 @@ import os
 from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms
+import torch.nn as nn
 
 # Data set: 254 seb, 1372 normal, 374 melanoma
 # 0 - neither melanoma nor seb 
 # 1 - melanoma
 # 2 - seb 
 
+##CONSTANTS 
+MELANOMA = 1
+NEITHER = 0
+SEB = 2 
+
+# Data preprocessing variables 
+image_width = 256
+image_height = 256 
+
+
 """
 I had to seperate the images from superpixel images in the training data file using
 mv ISIC_*******.png images
-"""
-"""
+
 Add the address for the ground truth csv file on your computer here - we should do this more neatly later 
 but it was taking wayyy too long to just upload the dataset with the code to git and I took wayyy too long
 playing with different ideas of how to do so. 
 """
 
 image_file = "/Users/katieoreilly/Desktop/UNSW/ISIC-2017_Training_Data_2/images"
-raw_truth_file = "/Users/katieoreilly/Desktop/UNSW/ISIC-2017_Training_Part3_ModifiedGroundTruth.csv"
-modified_truth_file = "/Users/katieoreilly/Desktop/UNSW/ISIC-2017_Training_Part3_GroundTruth.csv"
+modified_truth_file = "/Users/katieoreilly/Desktop/UNSW/ISIC-2017_Training_Part3_ModifiedGroundTruth.csv"
+raw_truth_file = "/Users/katieoreilly/Desktop/UNSW/ISIC-2017_Training_Part3_GroundTruth.csv"
 
 """
 Adds a truth column to the groundTruth csv file. This column contains a 
@@ -33,18 +43,22 @@ def add_truth_column():
     df = pd.read_csv(raw_truth_file)
     output_file = modified_truth_file
     print(df.shape)
-    df.insert(len(df.columns), "truth", 0)
+    df.insert(len(df.columns), "truth", NEITHER)
     for index, row in df.iterrows():
         #intially truth is 0 
         # assign melanoma as 1 
         if row['melanoma'] == 1.0 : 
-            df.at[index, 'truth'] = 1
+            df.at[index, 'truth'] = MELANOMA
         # assign seb as 2 
         elif row['seborrheic_keratosis'] == 1.0 :
-            df.at[index, 'truth'] = 2
+            df.at[index, 'truth'] = SEB
 
     df.to_csv(output_file)
 
+transforms = transforms.Compose([
+    transforms.Resize((image_width, image_height)),
+    transforms.ToTensor()
+])
 
 """
 Loads the data for the 2017 data set. We can add transforms for the targets and images later.
@@ -54,7 +68,7 @@ but I didnt think of doing that when I was coding it. """
 class DataSet17(Dataset) :
     # annotations_file: csv file containing ground truth for each image 
     #img_dir: directory of skin lesion images 
-    def __init__(self, annotations_file, img_dir, transform = None, target_transform = None) :
+    def __init__(self, annotations_file, img_dir, transform = transforms, target_transform = None) :
         current_directory = os.getcwd()  # Get the current working directory
         print(f"Current working directory: {current_directory}")
         self.img_dir = img_dir
@@ -71,11 +85,14 @@ class DataSet17(Dataset) :
         
         try:
             image = Image.open(img_path).convert('RGB')
-            width, height = image.size
-            return image, label_name, height, width
+            if self.transform:
+                image = self.transform(image)
+            return image, label_name
         except Exception as e:
             print(f"Error loading image {img_path} at index {index}: {e}")
             raise e
+    def __len__(self) :
+        return len(self.img_dir) 
 
 #Add your own address for the dataset on your computer here 
 train_dataset = DataSet17(
@@ -83,11 +100,11 @@ train_dataset = DataSet17(
     img_dir = image_file)
 
 # Testing that have correctly loaded data
-img, label, height, width = train_dataset[33]
-print(f"Sample 0: Image height: {height}, Image width: {width}, Label: {label}")
-img.show()
+img, label = train_dataset[1]
+#img.show()
 
-
+# Device configuration
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 #Hyper parameters 
 num_epochs = 5 
@@ -99,3 +116,60 @@ learning_rate = 0.001
 train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
                                            batch_size=batch_size, 
                                            shuffle=True)
+
+class ConvNetModel_1(nn.Module):
+    def __init__(self, num_classes = 3):
+        super(ConvNetModel_1, self).__init__()
+        self.layer1 = nn.Sequential(
+            #Because is RGB in channells = 3 
+            nn.Conv2d(3, 12, kernel_size=5, stride=1, padding=2),
+            nn.BatchNorm2d(12),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2, stride=2))
+        self.layer2 = nn.Sequential(
+            nn.Conv2d(12, 32, kernel_size=5, stride=1, padding=2),
+            nn.BatchNorm2d(32),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2, stride=2))
+        self.fc = nn.Linear(64*64*32, num_classes)
+        
+    def forward(self, x):
+        print("STARTING :")
+        print(x.shape)
+        out = self.layer1(x)
+        print(out.shape)
+        out = self.layer2(out)
+        print(out.shape)
+        out = out.reshape(out.size(0), -1)
+        out = self.fc(out)
+        print(out.shape)
+        print("END")
+        return out
+
+
+
+
+model = ConvNetModel_1(num_classes).to(device)
+
+# Loss and optimizer
+criterion = nn.CrossEntropyLoss()
+optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+
+# Train the model
+total_step = len(train_loader)
+for epoch in range(num_epochs):
+    for i, (images, labels) in enumerate(train_loader):
+        images = images.to(device)
+        labels = labels.to(device)
+        
+        # Forward pass
+        outputs = model(images)
+        loss = criterion(outputs, labels)
+        
+        # Backward and optimize
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+        
+        if (i+1) % 100 == 0:
+            print ('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}' .format(epoch+1, num_epochs, i+1, total_step, loss.item()))
