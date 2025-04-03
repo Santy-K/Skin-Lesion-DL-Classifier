@@ -1,5 +1,9 @@
 .venv
 data/all/*
+!data/all/.gitkeep
 data/test/*
+!data/test/.gitkeep
 data/train/*
+!data/train/.gitkeep
 data/validation/*
+!data/validation/.gitkeep
