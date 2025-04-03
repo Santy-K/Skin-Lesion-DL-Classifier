@@ -1,6 +1,7 @@
 import torch
 import pandas as pd 
 import os 
+from torchvision.transforms import v2
 from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms
@@ -19,8 +20,8 @@ NEITHER = 0
 SEB = 2 
 
 # Data preprocessing variables 
-image_width = 256
-image_height = 256 
+image_width = 128
+image_height = 128 
 
 
 """
@@ -70,9 +71,12 @@ def add_truth_column(raw, modified):
 #add_truth_column(test_truth_file, modified_test_truth_file)
 #add_truth_column(valid_truth_file, modified_valid_truth_file)
 
-transforms = transforms.Compose([
-    transforms.Resize((image_width, image_height)),
-    transforms.ToTensor()
+transforms = v2.Compose([
+    v2.Resize((image_width, image_height)),
+    v2.ToImage(),
+    v2.ToDtype(torch.float32, scale=True),
+    v2.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+    v2.ToTensor()
     #Save the images in a file
 ])
 
@@ -159,7 +163,7 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 num_epochs = 10
 num_classes = 3 
 batch_size = 50 
-learning_rate = 0.001 
+learning_rate = 0.03 
 
 #Data Loader 
 train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
@@ -186,7 +190,7 @@ class ConvNetModel_1(nn.Module):
             nn.BatchNorm2d(32),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2))
-        self.fc = nn.Linear(64*64*32, num_classes)
+        self.fc = nn.Linear(32*32*32, num_classes)
         
     def forward(self, x):
         #print("STARTING :")
