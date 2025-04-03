@@ -1,5 +1,5 @@
 .venv
-data/all
-data/test
-data/train
-data/validation
+data/all/*
+data/test/*
+data/train/*
+data/validation/*

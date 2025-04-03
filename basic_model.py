@@ -11,6 +11,8 @@ import torch.nn as nn
 # 1 - melanoma
 # 2 - seb 
 
+torch.manual_seed(0)
+
 ##CONSTANTS 
 MELANOMA = 1
 NEITHER = 0
@@ -234,7 +236,6 @@ for epoch in range(num_epochs):
             correct += (predicted == labels).sum().item()
         
         print(f'Accuracy of the network on the {total} test images: {100 * correct // total} %')
-        
 
 #Validate the model
 with torch.no_grad():
