@@ -132,6 +132,20 @@ print("Validation size: ", len(valid_dataset))
 
 #exit(1)
 
+#Random weighted sampling
+class_counts_train = train_dataset.img_labels['truth'].value_counts().to_dict()
+class_counts_test = test_dataset.img_labels['truth'].value_counts().to_dict()
+class_counts_valid = valid_dataset.img_labels['truth'].value_counts().to_dict()
+
+sample_weights_train = [1/class_counts_train[label] for label in train_dataset.img_labels['truth']]
+sample_weights_test = [1/class_counts_test[label] for label in test_dataset.img_labels['truth']]
+sample_weights_valid = [1/class_counts_valid[label] for label in valid_dataset.img_labels['truth']]
+
+# Create a weighted random sampler for the training set
+train_sampler = torch.utils.data.WeightedRandomSampler(weights=sample_weights_train, num_samples=len(train_dataset), replacement=True)
+test_sampler = torch.utils.data.WeightedRandomSampler(weights=sample_weights_test, num_samples=len(test_dataset), replacement=True)
+valid_sampler = torch.utils.data.WeightedRandomSampler(weights=sample_weights_valid, num_samples=len(valid_dataset), replacement=True)
+
 # Testing that have correctly loaded data
 train_img, train_label = train_dataset[1]
 test_img, test_label = test_dataset[1]
@@ -149,14 +163,14 @@ learning_rate = 0.001
 
 #Data Loader 
 train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
-                                           batch_size=batch_size, 
-                                           shuffle=True)
+                                        batch_size=batch_size,
+                                        sampler=train_sampler)
 test_loader = torch.utils.data.DataLoader(dataset=test_dataset,
-                                             batch_size=batch_size, 
-                                             shuffle=False)
+                                        batch_size=batch_size, 
+                                        sampler=test_sampler)
 valid_loader = torch.utils.data.DataLoader(dataset=valid_dataset,
-                                                batch_size=batch_size, 
-                                                shuffle=False)
+                                        batch_size=batch_size, 
+                                        sampler=valid_sampler)
  
 class ConvNetModel_1(nn.Module):
     def __init__(self, num_classes = 3):
