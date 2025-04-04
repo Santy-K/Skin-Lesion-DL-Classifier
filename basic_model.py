@@ -13,6 +13,7 @@ from helpers import networkTraining
 # 1 - melanoma
 # 2 - seb 
 
+# removes reweighting of NN 
 torch.manual_seed(0)
 
 ##CONSTANTS 
@@ -55,7 +56,7 @@ def add_truth_column(raw, modified):
         # assign seb as 2 
         elif row['seborrheic_keratosis'] == 1.0 :
             df.at[index, 'truth'] = SEB
-
+    df = df.sample(frac=1).reset_index(drop=True)
     df.to_csv(output_file)
 
 #add_truth_column(train_truth_file, modified_train_truth_file)
@@ -64,17 +65,16 @@ def add_truth_column(raw, modified):
 
 transforms = v2.Compose([
     v2.Resize((image_width, image_height)),
+    # v2.Grayscale(1),
     v2.ToImage(),
     v2.ToDtype(torch.float32, scale=True),
-    v2.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+    v2.Normalize(mean=[0.5,0.5,0.5], std=[0.5,0.5,0.5]),
     v2.ToTensor()
     #Save the images in a file
 ])
 
 #Data loader for 2017 data set 
 class DataSet17(Dataset) :
-    # annotations_file: csv file containing ground truth for each image 
-    #img_dir: directory of skin lesion images 
     def __init__(self, annotations_file, img_dir, transform = transforms, target_transform = None) :
         current_directory = os.getcwd()  # Get the current working directory
         print(f"Current working directory: {current_directory}")
@@ -101,11 +101,6 @@ class DataSet17(Dataset) :
             raise e
     def __len__(self) :
         return len(self.img_labels)
-
-#Add your own address for the dataset on your computer here 
-#dataset = DataSet17(
-#    annotations_file = modified_truth_file,
-#    img_dir = image_file)
 
 #Split in to train, test and validation data
 train_dataset = DataSet17(
@@ -192,6 +187,7 @@ class ConvNetModel_1(nn.Module):
         #print(out.shape)
         #print("END")
         return out
+
 
 model = ConvNetModel_1(num_classes).to(device)
 
