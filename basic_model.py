@@ -6,6 +6,7 @@ from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms
 import torch.nn as nn
+from helpers import networkTraining
 
 # Data set: 254 seb, 1372 normal, 374 melanoma
 # 0 - neither melanoma nor seb 
@@ -96,6 +97,7 @@ class DataSet17(Dataset) :
         self.img_labels = pd.read_csv(annotations_file)
         self.transform = transform
         self.target_transform = target_transform 
+        self.classes = self.img_labels['truth'].unique()
 
     def __getitem__(self, index) :
         img_filename = self.img_labels.iloc[index, self.img_labels.columns.get_loc('image_id')]
@@ -160,9 +162,9 @@ valid_img, valid_label = valid_dataset[1]
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 #Hyper parameters 
-num_epochs = 10
+num_epochs = 30
 num_classes = 3 
-batch_size = 50 
+batch_size = 64
 learning_rate = 0.03 
 
 #Data Loader 
@@ -211,61 +213,11 @@ model = ConvNetModel_1(num_classes).to(device)
 criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
-# Train the model
-total_step = len(train_loader)
+trainer = networkTraining(model, optimizer, criterion)
 for epoch in range(num_epochs):
-    total_correct = 0
-    total_total = 0
-    for i, (images, labels) in enumerate(train_loader):
-        images = images.to(device)
-        labels = labels.to(device)
-        
-        # Forward pass
-        outputs = model(images)
-        loss = criterion(outputs, labels)
-        
-        # Backward and optimize
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-        
-        #if (i+1) % 100 == 0:
-        #print ('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}' .format(epoch+1, num_epochs, i+1, total_step, loss.item()))
-        print(f"Epoch [{epoch+1}/{num_epochs}], Step [{i+1}/{total_step}], Loss: {loss.item():.4f}")
-        
-        #Check accuracy
-        _, predicted = torch.max(outputs.data, 1)
-        total = labels.size(0)
-        correct = (predicted == labels).sum().item()
-        total_total += total
-        total_correct += correct
-    print(f'Accuracy of the network on the {total_total} train images: {100 * total_correct // total_total} %')
-    
-    # Test the model
-    with torch.no_grad():
-        correct = 0
-        total = 0
-        for images, labels in test_loader:
-            images = images.to(device)
-            labels = labels.to(device)
-            outputs = model(images)
-            _, predicted = torch.max(outputs.data, 1)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
-        
-        print(f'Accuracy of the network on the {total} test images: {100 * correct // total} %')
+    print("Training epoch: ", epoch + 1)
+    trainer.train(train_loader, epoch)
+    print("Testing epoch: ", epoch + 1)
+    trainer.test(valid_loader)
 
-#Validate the model
-with torch.no_grad():
-    correct = 0
-    total = 0
-    for images, labels in valid_loader:
-        images = images.to(device)
-        labels = labels.to(device)
-        outputs = model(images)
-        _, predicted = torch.max(outputs.data, 1)
-        total += labels.size(0)
-        correct += (predicted == labels).sum().item()
-    
-    print(f'Accuracy of the network on the {total} validation images: {100 * correct // total} %')
-        
+trainer.test(test_loader)
