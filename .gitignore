@@ -7,5 +7,5 @@ data/train/*
 !data/train/.gitkeep
 data/validation/*
 !data/validation/.gitkeep
-__pycache__/
+__pycache__
 .DS_Store
