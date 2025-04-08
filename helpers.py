@@ -219,6 +219,14 @@ def add_truth_column(raw: str, modified: str):
 
     df.to_csv(output_file)
 
+def print_label_distribution(h5_file_path):
+    with h5py.File(h5_file_path, 'r') as f:
+        labels = f['labels'][:]
+        unique_labels, counts = np.unique(labels, return_counts=True)
+        for label, count in zip(unique_labels, counts):
+            print(f"Label {label}: {count} samples")
+    return 0
+
 def convertdata():
     #Example usage of dataset creation
     add_truth_column("data/train.csv", "data/train_truth_1.csv")
@@ -232,14 +240,6 @@ def convertdata():
     print_label_distribution("data/train.h5")
     print_label_distribution("data/valid.h5")
     print_label_distribution("data/test.h5")
-
-def print_label_distribution(h5_file_path):
-    with h5py.File(h5_file_path, 'r') as f:
-        labels = f['labels'][:]
-        unique_labels, counts = np.unique(labels, return_counts=True)
-        for label, count in zip(unique_labels, counts):
-            print(f"Label {label}: {count} samples")
-    return 0
 
 if __name__ == "__main__":
     print("test")
