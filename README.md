@@ -9,6 +9,13 @@ run `git lfs install`
 Data sourced from:
 https://challenge.isic-archive.com/data/#2017
 
+Dependencies:
+- numpy
+- pytorch
+- torchvision
+- h5py
+- pandas
+
 Basic Model 
 - used weighted random sampler on validation and test as well as training 
 - 120 by 120 images 
