@@ -109,16 +109,17 @@ def main():
     for epoch in range(num_epochs):
         print("Training epoch: ", epoch)
         trainer.train(train_loader, epoch)
+        
         print("Testing epoch: ", epoch)
-        trainer.test(valid_loader, "Validation")
+        trainer.test(valid_loader, "Validation", epoch)
         
         #Save the model
-        model.save_model("model.pth")
+        trainer.save_model("model.pth")
 
     #6. Final testing/validation
-    trainer.test(test_loader, "Test")
+    trainer.test(test_loader, "Test", num_epochs)
     
-    #Save the model
+    #Save the model after final testing
     trainer.save_model("model.pth")
 
 if __name__ == "__main__":

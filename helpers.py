@@ -67,7 +67,7 @@ class networkTraining():
         print(f"Train Epoch: {epoch}\t Loss: {loss_total / len(train_loader.dataset):.6f} \t Accuracy: {100. * correct / len(train_loader.dataset):.0f}%")
     
     #Adapted fromkuzu_main.py, hw1 of COMP9444
-    def test(self, test_loader: DataLoader, name:str="test"):
+    def test(self, test_loader: DataLoader, name:str="test", epoch:int=0):
         """Tests the model using the given data loader. Name is used for logging purposes.
         
         Args:
@@ -95,8 +95,8 @@ class networkTraining():
                 correct += (pred == target).sum().item()
                 total_samples += target.size(0)
         
-        self.history.setdefault(name, {})[f"{name}_loss"] = test_loss / batches
-        self.history[name][f"{name}_accuracy"] = 100. * correct / len(test_loader.dataset)
+        self.history.setdefault(epoch, {})[f"{name}_loss"] = test_loss / batches
+        self.history[epoch][f"{name}_accuracy"] = 100. * correct / len(test_loader.dataset)
         
         print(f"\n{name}: Average loss: {test_loss / batches:.4f}, Accuracy: {correct}/{len(test_loader.dataset)} ({100. * correct / len(test_loader.dataset):.0f}%)\n")
 
@@ -106,9 +106,8 @@ class networkTraining():
         torch.save(self.model.state_dict(), path)
         
         #Save the history of the model
-        df = pd.DataFrame.from_dict(self.history, orient='index')
-        df.index_name = "epoch"
-        df.reset_index(inplace=True)
+        df = pd.DataFrame(self.history).T
+        df = df.rename_axis('epoch').reset_index()
         df.to_csv(f"{model_name}_history.csv", index=False)
             
 MELANOMA = 1
