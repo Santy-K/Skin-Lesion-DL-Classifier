@@ -111,6 +111,9 @@ def main():
         trainer.train(train_loader, epoch)
         print("Testing epoch: ", epoch)
         trainer.test(valid_loader, "Validation")
+        
+        #Save the model
+        model.save_model("model.pth")
 
     #6. Final testing/validation
     trainer.test(test_loader, "Test")
