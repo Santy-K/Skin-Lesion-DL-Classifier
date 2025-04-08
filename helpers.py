@@ -3,8 +3,8 @@ import pandas as pd
 import os 
 from PIL import Image
 import numpy as np
-from torch.amp import autocast, GradScaler
-
+from torch.amp import autocast
+from torch.utils.data import DataLoader
 
 #Fix for h5py sometimes not being able to open files in parallel
 os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
@@ -15,16 +15,30 @@ class networkTraining():
     This class handles the training and testing process, including saving the model.
     """
     def __init__(self, model, optimizer, criterion):
+        """Creates the network training class.
+        This class handles the training and testing process, including saving the model.
+
+        Args:
+            model: Model to be trained.
+            optimizer: Optimizer to be used.
+            criterion: Loss function to be used.
+        """
         self.device_type = 'cuda' if torch.cuda.is_available() else 'cpu'
         device = torch.device(self.device_type)
         
-        self.model = model.to(device)
+        self.model = model
         self.optimizer = optimizer
         self.criterion = criterion
         self.device = device
 
     #Adapted fromkuzu_main.py, hw1 of COMP9444
-    def train(self, train_loader, epoch=0):
+    def train(self, train_loader: DataLoader, epoch:int=0):
+        """Trains the model for one epoch using the given data loader. Epoch is used for logging purposes.
+
+        Args:
+            train_loader (DataLoader): DataLoader for the training data.
+            epoch (int, optional): Epoch of the cycle. Used for logging. Defaults to 0.
+        """
         self.model.train()
         correct = 0
         loss_total = 0
@@ -45,17 +59,26 @@ class networkTraining():
             
             print(f"Train Epoch: {epoch} [{batch_idx * len(data)}/{len(train_loader.dataset)}]")
 
+
         print(f"Train Epoch: {epoch}\t Loss: {loss_total / len(train_loader.dataset):.6f} \t Accuracy: {100. * correct / len(train_loader.dataset):.0f}%")
     
     #Adapted fromkuzu_main.py, hw1 of COMP9444
-    def test(self, test_loader, name):
+    def test(self, test_loader: DataLoader, name:str="Test"):
+        """Tests the model using the given data loader. Name is used for logging purposes.
+        
+        Args:
+            train_loader (DataLoader): DataLoader for the training data.
+            name (str, optional): Name of the test set. Used for logging. Defaults to "Test".
+        """
         self.model.eval()
+
         test_loss = 0
         correct = 0
         total_samples = 0
         batches = len(test_loader)
 
-        with torch.no_grad():
+        #inference_mode is faster than no_grad
+        with torch.inference_mode():
             for data, target in test_loader:
                 data, target = data.to(self.device), target.to(self.device)
                 with autocast(self.device_type):

@@ -1,4 +1,5 @@
 import torch.nn as nn
+
 class ConvNetModel_1(nn.Module):
     """Basic Convolutional Neural Network model for image classification based on hw1 of COMP9444.
     """

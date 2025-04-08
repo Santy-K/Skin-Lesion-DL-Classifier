@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 from torchvision.transforms import v2
-from torch.utils.data import Dataset, DataLoader, WeightedRandomSampler
+from torch.utils.data import DataLoader, WeightedRandomSampler
 import torch.nn as nn
 from helpers import HDF5Dataset, networkTraining
 from models import ConvNetModel_1
