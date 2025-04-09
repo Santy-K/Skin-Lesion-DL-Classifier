@@ -8,6 +8,7 @@ from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
 
+
 #Fix for h5py sometimes not being able to open files in parallel
 os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
 import h5py
@@ -241,6 +242,18 @@ class HDF5Dataset(torch.utils.data.Dataset):
             image = self.transform(image)
         
         return image, label
+    
+def save_transformed_image(tensor, filename, output_dir="transformed_images"):
+    #Saves a transformed image tensor to a file.
+    os.makedirs(output_dir, exist_ok=True)
+    # Add back the mean and std if you want to visualize the original color space
+    mean = torch.tensor([0.5, 0.5, 0.5]).to(tensor.device)[:, None, None]
+    std = torch.tensor([0.5, 0.5, 0.5]).to(tensor.device)[:, None, None]
+    img = tensor * std + mean
+    img = img.clamp(0, 1)
+    img = Image.fromarray((img.permute(1, 2, 0).cpu().numpy() * 255).astype(np.uint8))
+    filepath = os.path.join(output_dir, filename)
+    img.save(filepath)
 
 def add_truth_column(raw: str, modified: str):
     """Given a csv file with image_id and labels, add a column for truth values.

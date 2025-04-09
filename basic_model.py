@@ -3,10 +3,11 @@ import numpy as np
 from torchvision.transforms import v2
 from torch.utils.data import DataLoader, WeightedRandomSampler
 import torch.nn as nn
-from helpers import HDF5Dataset, networkTraining
+from helpers import HDF5Dataset, networkTraining, save_transformed_image
 from models import ConvNetModel_1
 import os
 import sys
+
 
 def main():
     #Set the seed for reproducibility
@@ -110,6 +111,26 @@ def main():
     trainer = networkTraining(model, optimizer, criterion)
     for epoch in range(num_epochs):
         print("Training epoch: ", epoch)
+        model.train()
+        for batch_idx, (original_images, target) in enumerate(train_loader):
+            # 'original_images' here are the images *before* the transforms
+            data = original_images.to(device)
+            target = target.to(device).long()
+            optimizer.zero_grad()
+
+            with torch.autocast(device_type=trainer.device_type):
+                outputs = model(data)
+                loss = criterion(outputs, target)
+            loss.backward()
+            optimizer.step()
+            pred = outputs.argmax(dim=1, keepdim=True)
+
+            # Save a few transformed images for visualization
+            if epoch == 0 and batch_idx < 5:  #from first epoch
+                for i in range(data.size(0)):
+                    save_transformed_image(data[i], f"epoch_0_batch_{batch_idx}_index_{i}.png")
+            if epoch == 0 and batch_idx == 4:
+                print(f"\nSaved transformed images to: transformed_images")
         trainer.train(train_loader, epoch)
         
         print("Testing epoch: ", epoch)
