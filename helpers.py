@@ -47,7 +47,8 @@ class networkTraining():
         self.model.train()
         correct = 0
         loss_total = 0
-        
+        total_images = 0
+
         for batch_idx, (data, target) in enumerate(train_loader):
             data, target = data.to(self.device), target.to(self.device)
             target = target.long()
@@ -62,12 +63,14 @@ class networkTraining():
             correct += pred.eq(target.view_as(pred)).sum().item()
             loss_total += loss.item()
             
-            print(f"Train Epoch: {epoch} [{batch_idx * len(data)}/{len(train_loader.dataset)}]")
+            total_images += len(data)
 
-        self.history.setdefault(epoch, {})["train_loss"] = loss_total / len(train_loader.dataset)
-        self.history[epoch]["train_accuracy"] = 100. * correct / len(train_loader.dataset)
+            print(f"Train Epoch: {epoch} [{total_images}/{len(train_loader.dataset)}]")
+
+        self.history.setdefault(epoch, {})["train_loss"] = loss_total / batch_idx
+        self.history[epoch]["train_accuracy"] = correct / len(train_loader.dataset)
         
-        print(f"Train Epoch: {epoch}\t Loss: {loss_total / len(train_loader.dataset):.6f} \t Accuracy: {100. * correct / len(train_loader.dataset):.0f}%")
+        print(f"Train Epoch: {epoch}\t Loss: {loss_total / batch_idx:.6f} \t Accuracy: {100. * correct / len(train_loader.dataset):.0f}%")
     
     #Adapted fromkuzu_main.py, hw1 of COMP9444
     def test(self, test_loader: DataLoader, name:str="test", epoch:int=0):
@@ -99,7 +102,7 @@ class networkTraining():
                 total_samples += target.size(0)
         
         self.history.setdefault(epoch, {})[f"{name}_loss"] = test_loss / batches
-        self.history[epoch][f"{name}_accuracy"] = 100. * correct / len(test_loader.dataset)
+        self.history[epoch][f"{name}_accuracy"] = correct / len(test_loader.dataset)
         
         print(f"\n{name}: Average loss: {test_loss / batches:.4f}, Accuracy: {correct}/{len(test_loader.dataset)} ({100. * correct / len(test_loader.dataset):.0f}%)\n")
 
@@ -115,7 +118,7 @@ class networkTraining():
         os.makedirs(os.path.dirname(model_name), exist_ok=True)
         df.to_csv(f"{model_name}_history.csv", index=False)
     
-    def plot_model(self, path):
+    def plot_model(self, path='plot.jpg', model_name="model"):
         df = pd.DataFrame(self.history).T
         df = df.rename_axis("epoch").reset_index()
         
@@ -145,7 +148,11 @@ class networkTraining():
         ax[1].legend()
         
         fig.tight_layout()
-        
+        fig.subplots_adjust(top=0.9)
+       
+        #Title
+        fig.suptitle(f"{model_name} Performance")
+        plt.show()
         plt.savefig(path)
             
 MELANOMA = 1

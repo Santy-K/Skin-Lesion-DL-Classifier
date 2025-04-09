@@ -5,9 +5,6 @@ from torch.utils.data import DataLoader, WeightedRandomSampler
 import torch.nn as nn
 from helpers import HDF5Dataset, networkTraining, save_transformed_image
 from models import ConvNetModel_1
-import os
-import sys
-import matplotlib.pyplot as plt
 
 
 def main():
@@ -97,8 +94,8 @@ def main():
     )
     
     #2. Hyperparameters
-    learning_rate = 0.001
-    num_epochs = 20
+    learning_rate = 0.00001
+    num_epochs = 250
     
     #3. Model
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -126,7 +123,7 @@ def main():
     #Save the model after final testing
     trainer.save_model("model.pth")
     
-    trainer.plot_model()
+    trainer.plot_model(model_name="ConvNet1")
     
     return 0
 
