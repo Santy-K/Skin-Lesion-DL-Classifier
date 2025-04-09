@@ -5,6 +5,8 @@ from torch.utils.data import DataLoader, WeightedRandomSampler
 import torch.nn as nn
 from helpers import HDF5Dataset, networkTraining
 from models import ConvNetModel_1
+import os
+import sys
 
 def main():
     #Set the seed for reproducibility
@@ -121,6 +123,15 @@ def main():
     
     #Save the model after final testing
     trainer.save_model("model.pth")
+    
+    trainer.plot_model()
+    
+    return 0
 
 if __name__ == "__main__":
-    main()
+    print("Starting")
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("Shutting down")
+        

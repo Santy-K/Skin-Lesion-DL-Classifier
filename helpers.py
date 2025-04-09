@@ -5,6 +5,8 @@ from PIL import Image
 import numpy as np
 from torch.amp import autocast
 from torch.utils.data import DataLoader
+import matplotlib.pyplot as plt
+from matplotlib.ticker import FuncFormatter
 
 #Fix for h5py sometimes not being able to open files in parallel
 os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
@@ -101,7 +103,7 @@ class networkTraining():
         print(f"\n{name}: Average loss: {test_loss / batches:.4f}, Accuracy: {correct}/{len(test_loader.dataset)} ({100. * correct / len(test_loader.dataset):.0f}%)\n")
 
         
-    def save_model(self, path, model_name="model"):
+    def save_model(self, path, model_name="history/model"):
         #Save the model
         torch.save(self.model.state_dict(), path)
         
@@ -109,6 +111,39 @@ class networkTraining():
         df = pd.DataFrame(self.history).T
         df = df.rename_axis('epoch').reset_index()
         df.to_csv(f"{model_name}_history.csv", index=False)
+    
+    def plot_model(self, path):
+        df = pd.DataFrame(self.history).T
+        df = df.rename_axis("epoch").reset_index()
+        
+        fig, ax = plt.subplots(1, 2, figsize=(8, 4))
+        
+        #Loss and accuracy
+        loss_list = [x for x in list(df) if "loss" in x]
+        acc_list = [x for x in list(df) if "accuracy" in x]
+        
+        for loss in loss_list:
+            ax[0].plot(df["epoch"], df[loss], label=loss)
+        
+        for acc in acc_list:
+            ax[1].plot(df["epoch"], df[acc], label=acc)
+        
+        #Labelling and formatting
+        ax[0].set_title("Loss")
+        ax[0].set_xlabel("Epoch")
+        ax[0].set_ylabel("Loss")
+        ax[0].legend()
+        
+        ax[1].set_title("Accuracy")
+        ax[1].set_xlabel("Epoch")
+        ax[1].set_ylabel("Accuracy")
+        ax[1].yaxis.set_major_formatter(FuncFormatter('{0:.0%}'.format))
+        ax[1].set_ylim((0, 1))
+        ax[1].legend()
+        
+        fig.tight_layout()
+        
+        plt.savefig(path)
             
 MELANOMA = 1
 NEITHER = 0
@@ -256,9 +291,35 @@ def convertdata():
     print_label_distribution("data/test.h5")
 
 if __name__ == "__main__":
-    print("test")
-    print_label_distribution("data/train.h5")
-    print("validation")
-    print_label_distribution("data/valid.h5")
-    print("test")
-    print_label_distribution("data/test.h5")
+    df = pd.read_csv("test.csv")
+    
+    #df = df.rename_axis("epoch").reset_index()
+        
+    fig, ax = plt.subplots(1, 2, figsize=(8, 4))
+    
+    #Loss and accuracy
+    loss_list = [x for x in list(df) if "loss" in x]
+    acc_list = [x for x in list(df) if "accuracy" in x]
+    
+    for loss in loss_list:
+        ax[0].plot(df["epoch"], df[loss], label=loss)
+    
+    for acc in acc_list:
+        ax[1].plot(df["epoch"], df[acc], label=acc)
+    
+    #Labelling and formatting
+    ax[0].set_title("Loss")
+    ax[0].set_xlabel("Epoch")
+    ax[0].set_ylabel("Loss")
+    ax[0].legend()
+    
+    ax[1].set_title("Accuracy")
+    ax[1].set_xlabel("Epoch")
+    ax[1].set_ylabel("Accuracy")
+    ax[1].yaxis.set_major_formatter(FuncFormatter('{0:.0%}'.format))
+    ax[1].set_ylim((0, 1))
+    ax[1].legend()
+    
+    fig.tight_layout()
+    
+    plt.show()
