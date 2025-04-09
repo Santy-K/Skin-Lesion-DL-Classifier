@@ -111,6 +111,8 @@ class networkTraining():
         #Save the history of the model
         df = pd.DataFrame(self.history).T
         df = df.rename_axis('epoch').reset_index()
+        #Create the folder if it does not exist
+        os.makedirs(os.path.dirname(model_name), exist_ok=True)
         df.to_csv(f"{model_name}_history.csv", index=False)
     
     def plot_model(self, path):
