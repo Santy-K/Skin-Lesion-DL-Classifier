@@ -104,9 +104,9 @@ def main():
     )
     
     
-    #2. Hyperparameters
+    #2. Hyperparameters, standard for reference
     learning_rate = 0.001
-    num_epochs = 100
+    num_epochs = 75
     
     #3. Model
     model = AlexNetModel()

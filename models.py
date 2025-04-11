@@ -36,6 +36,8 @@ class ConvNetModel_1(nn.Module):
         return out
 
 #Use pretrained AlexNet model from torchvision
+#As a standard, we will cut out the last layer and replace it with a new one.
+#Dropout of 50%, and ReLU activation function, n_inputs->512->num_classes
 def AlexNetModel(num_classes=3):
     model = models.alexnet(weights=models.AlexNet_Weights.DEFAULT)
     #Freeze the layers
