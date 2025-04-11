@@ -8,6 +8,7 @@ from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
 import time
+import torchvision.transforms as v2
 
 
 #Fix for h5py sometimes not being able to open files in parallel
@@ -34,7 +35,7 @@ class networkTraining():
         self.optimizer = optimizer
         self.criterion = criterion
         self.device = device
-        self.model.to(self.device)
+        self.model.to(self.device, non_blocking=True)
         self.history = {}
 
     #Adapted fromkuzu_main.py, hw1 of COMP9444
@@ -53,7 +54,7 @@ class networkTraining():
         t = time.time()
         
         for batch_idx, (data, target) in enumerate(train_loader):
-            data, target = data.to(self.device), target.to(self.device)
+            data, target = data.to(self.device, non_blocking=True), target.to(self.device, non_blocking=True)
             target = target.long()
             self.optimizer.zero_grad()
             
@@ -202,12 +203,19 @@ def create_h5_from_images(csv_path: str, img_dir: str, h5_filename: str, resolut
 
             #Resize
             with Image.open(img_path).convert('RGB') as img:
-                img = img.resize((image_width, image_height), Image.BILINEAR)
+                transform = v2.Compose([
+                    v2.Resize(size=(image_height, image_width)),
+                    #v2.CenterCrop(size=(image_height, image_width)),
+                ])
+                img = transform(img)
                 # Convert to NumPy array
                 img_np = np.array(img, dtype=np.uint8)
 
             dset_images[i] = img_np
             dset_labels[i] = label
+            
+            if i % 200 == 0:
+                print(f"Processed {i}/{len(df['truth'])} images")
 
     print(f"Created {h5_filename} with {num_samples} samples.")
     
@@ -321,35 +329,10 @@ def convertdata():
     print_label_distribution("data/test.h5")
 
 if __name__ == "__main__":
-    df = pd.read_csv("test.csv")
+    create_h5_from_images("data/combined_truth.csv", "data/all", "data/all_128.h5", (128, 128))
+    #create_h5_from_images("data/combined_truth.csv", "data/all", "data/all_224.h5", (224, 224))
+    #create_h5_from_images("data/combined_truth.csv", "data/all", "data/all_240.h5", (240, 240))
     
-    #df = df.rename_axis("epoch").reset_index()
-        
-    fig, ax = plt.subplots(1, 2, figsize=(8, 4))
-    
-    #Loss and accuracy
-    loss_list = [x for x in list(df) if "loss" in x]
-    acc_list = [x for x in list(df) if "accuracy" in x]
-    
-    for loss in loss_list:
-        ax[0].plot(df["epoch"], df[loss], label=loss)
-    
-    for acc in acc_list:
-        ax[1].plot(df["epoch"], df[acc], label=acc)
-    
-    #Labelling and formatting
-    ax[0].set_title("Loss")
-    ax[0].set_xlabel("Epoch")
-    ax[0].set_ylabel("Loss")
-    ax[0].legend()
-    
-    ax[1].set_title("Accuracy")
-    ax[1].set_xlabel("Epoch")
-    ax[1].set_ylabel("Accuracy")
-    ax[1].yaxis.set_major_formatter(FuncFormatter('{0:.0%}'.format))
-    ax[1].set_ylim((0, 1))
-    ax[1].legend()
-    
-    fig.tight_layout()
-    
-    plt.show()
+    print_label_distribution("data/all_128.h5")
+    print_label_distribution("data/all_224.h5")
+    print_label_distribution("data/all_240.h5")
