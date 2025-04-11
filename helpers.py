@@ -7,6 +7,7 @@ from torch.amp import autocast
 from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
+import time
 
 
 #Fix for h5py sometimes not being able to open files in parallel
@@ -33,7 +34,7 @@ class networkTraining():
         self.optimizer = optimizer
         self.criterion = criterion
         self.device = device
-        
+        self.model.to(self.device)
         self.history = {}
 
     #Adapted fromkuzu_main.py, hw1 of COMP9444
@@ -48,7 +49,9 @@ class networkTraining():
         correct = 0
         loss_total = 0
         total_images = 0
-
+        
+        t = time.time()
+        
         for batch_idx, (data, target) in enumerate(train_loader):
             data, target = data.to(self.device), target.to(self.device)
             target = target.long()
@@ -69,8 +72,8 @@ class networkTraining():
 
         self.history.setdefault(epoch, {})["train_loss"] = loss_total / batch_idx
         self.history[epoch]["train_accuracy"] = correct / len(train_loader.dataset)
-        
-        print(f"Train Epoch: {epoch}\t Loss: {loss_total / batch_idx:.6f} \t Accuracy: {100. * correct / len(train_loader.dataset):.0f}%")
+        self.history[epoch]["train_time"] = time.time() - t
+        print(f"Train Epoch: {epoch}\t Loss: {loss_total / batch_idx:.6f} \t Accuracy: {correct}/{len(train_loader.dataset)} ({correct / len(train_loader.dataset):.2%})")
     
     #Adapted fromkuzu_main.py, hw1 of COMP9444
     def test(self, test_loader: DataLoader, name:str="test", epoch:int=0):
@@ -87,6 +90,8 @@ class networkTraining():
         total_samples = 0
         batches = len(test_loader)
 
+        t = time.time()
+        
         #inference_mode is faster than no_grad
         with torch.inference_mode():
             for data, target in test_loader:
@@ -103,8 +108,9 @@ class networkTraining():
         
         self.history.setdefault(epoch, {})[f"{name}_loss"] = test_loss / batches
         self.history[epoch][f"{name}_accuracy"] = correct / len(test_loader.dataset)
+        self.history[epoch][f"{name}_time"] = time.time() - t
         
-        print(f"\n{name}: Average loss: {test_loss / batches:.4f}, Accuracy: {correct}/{len(test_loader.dataset)} ({100. * correct / len(test_loader.dataset):.0f}%)\n")
+        print(f"\n{name}: Average loss: {test_loss / batches:.4f}, Accuracy: {correct}/{len(test_loader.dataset)} ({correct / len(test_loader.dataset):.2%}%)\n")
 
         
     def save_model(self, path, model_name="history/model"):
@@ -152,8 +158,10 @@ class networkTraining():
        
         #Title
         fig.suptitle(f"{model_name} Performance")
-        plt.show()
         plt.savefig(path)
+        
+        plt.show()
+        
             
 MELANOMA = 1
 NEITHER = 0

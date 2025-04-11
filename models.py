@@ -1,4 +1,5 @@
 import torch.nn as nn
+from torchvision import models
 
 class ConvNetModel_1(nn.Module):
     """Basic Convolutional Neural Network model for image classification based on hw1 of COMP9444.
@@ -33,3 +34,20 @@ class ConvNetModel_1(nn.Module):
         out = out.reshape(out.size(0), -1)
         out = self.fc(out)
         return out
+
+#Use pretrained AlexNet model from torchvision
+def AlexNetModel(num_classes=3):
+    model = models.alexnet(weights=models.AlexNet_Weights.DEFAULT)
+    #Freeze the layers
+    for param in model.parameters():
+        param.requires_grad = False
+    # Change the last layer to match the number of classes
+    fc_size = model.classifier[-1].in_features
+    model.classifier[-1] = nn.Sequential(
+        nn.Linear(fc_size, 512),
+        nn.ReLU(),
+        nn.Dropout(0.5),
+        nn.Linear(512, num_classes)
+    )
+
+    return model

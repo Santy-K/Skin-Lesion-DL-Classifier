@@ -4,7 +4,7 @@ from torchvision.transforms import v2
 from torch.utils.data import DataLoader, WeightedRandomSampler
 import torch.nn as nn
 from helpers import HDF5Dataset, networkTraining, save_transformed_image
-from models import ConvNetModel_1
+from models import ConvNetModel_1, AlexNetModel
 
 
 def main():
@@ -94,13 +94,13 @@ def main():
     )
     
     #2. Hyperparameters
-    learning_rate = 0.00001
+    learning_rate = 0.001
     num_epochs = 250
     
     #3. Model
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = ConvNetModel_1(3).to(device)
-
+    model = AlexNetModel()
     #4. Loss and optimizer
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
@@ -121,9 +121,9 @@ def main():
     trainer.test(test_loader, "Test", num_epochs)
     
     #Save the model after final testing
-    trainer.save_model("model.pth")
+    trainer.save_model("alexnet.pth", model_name="history/alexnet")
     
-    trainer.plot_model(model_name="ConvNet1")
+    trainer.plot_model(model_name="Alexnet")
     
     return 0
 
