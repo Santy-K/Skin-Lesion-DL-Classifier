@@ -124,7 +124,7 @@ def main():
         trainer.test(valid_loader, "Validation", epoch)
         
         #Save the model
-        trainer.save_model(f"models/alexnet_{epoch}.pth", "history/alexnet")
+        trainer.save_model(f"models/alexnet_{epoch}.pth", model_name="history/alexnet")
 
     #6. Final testing/validation
     trainer.test(test_loader, "Test", num_epochs)
