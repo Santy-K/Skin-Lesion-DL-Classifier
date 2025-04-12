@@ -9,7 +9,8 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
 import time
 import torchvision.transforms as v2
-
+from collections import Counter
+import random
 
 #Fix for h5py sometimes not being able to open files in parallel
 os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
@@ -313,6 +314,18 @@ def print_label_distribution(h5_file_path):
         for label, count in zip(unique_labels, counts):
             print(f"Label {label}: {count} samples")
     return 0
+
+def count_samples(dataloader):
+    labels = np.concatenate([labels.numpy() for _, labels in dataloader])
+    return Counter(labels)
+
+def seed_program(seed=1):
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    os.environ['PYTHONHASHSEED'] = str(seed)
+    random.seed(seed)
 
 def convertdata():
     #Example usage of dataset creation

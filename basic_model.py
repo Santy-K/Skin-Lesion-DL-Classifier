@@ -3,7 +3,7 @@ import numpy as np
 from torchvision.transforms import v2
 from torch.utils.data import DataLoader, WeightedRandomSampler
 import torch.nn as nn
-from helpers import HDF5Dataset, networkTraining, save_transformed_image
+from helpers import HDF5Dataset, networkTraining, save_transformed_image, count_samples, seed_program
 from models import ConvNetModel_1, AlexNetModel
 from sklearn.model_selection import train_test_split
 from collections import Counter
@@ -11,9 +11,7 @@ from collections import Counter
 
 def main():
     #Set the seed for reproducibility
-    torch.manual_seed(1)
-    np.random.seed(1)
-    
+    seed_program(seed=1)
     
     #0.1 Data preprocessing variables 
     image_scale = (224, 224)
@@ -77,13 +75,12 @@ def main():
     print("Test size: ", len(test_data), Counter(test_data.dataset.all_labels[test_data.indices]))
     print("Valid size: ", len(valid_data), Counter(valid_data.dataset.all_labels[valid_data.indices]))
     
-    #exit()
     train_loader = DataLoader(
         dataset=train_data,
         batch_size=batch_size,
         sampler=sampler,
         shuffle = False,
-        num_workers=2,
+        num_workers=1,
         pin_memory=True
     )
     
@@ -91,7 +88,7 @@ def main():
         dataset=test_data,
         batch_size=batch_size,
         shuffle=False,
-        num_workers=2,
+        num_workers=1,
         pin_memory=True
     )
     
@@ -99,10 +96,18 @@ def main():
         dataset=valid_data,
         batch_size=batch_size,
         shuffle=False,
-        num_workers=2,
+        num_workers=1,
         pin_memory=True
     )
     
+    #Testing the data loading. This is SLOW, so only run to verify the data loading is correct.
+    if 0 == 1:
+        print("After loading data:")
+        print(f"Train: {count_samples(train_loader)}")
+        print(f"Test: {count_samples(test_loader)}")
+        print(f"Valid: {count_samples(valid_loader)}")
+    
+        return 0
     
     #2. Hyperparameters, standard for reference
     learning_rate = 0.001
