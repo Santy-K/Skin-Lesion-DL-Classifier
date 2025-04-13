@@ -69,8 +69,6 @@ class networkTraining():
             total_images += len(data)
 
             print(f"Train Epoch: {epoch} [{total_images}/{len(train_loader.dataset)}]")
-            
-            return
 
         self.history.setdefault(epoch, {})["train_loss"] = loss_total / batch_idx
         self.history[epoch]["train_accuracy"] = correct / len(train_loader.dataset)
