@@ -29,13 +29,11 @@ class networkTraining():
             optimizer: Optimizer to be used.
             criterion: Loss function to be used.
         """
-        self.device_type = 'cuda' if torch.cuda.is_available() else 'cpu'
-        device = torch.device(self.device_type)
-        
+        self.device_type = get_device()
         self.model = model
         self.optimizer = optimizer
         self.criterion = criterion
-        self.device = device
+        self.device = torch.device(self.device_type)
         self.model.to(self.device, non_blocking=True)
         self.history = {}
 
@@ -163,7 +161,17 @@ class networkTraining():
         plt.savefig(path)
         
         plt.show()
-        
+    
+def get_device():
+    """Finds the device to be used for training and testing.
+    This is used to determine if a GPU is available.
+    """
+    if torch.cuda.is_available():
+        return 'cuda'
+    elif torch.backends.mps.is_available():
+        return 'mps'
+    
+    return 'cpu'
             
 MELANOMA = 1
 NEITHER = 0
