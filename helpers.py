@@ -11,7 +11,7 @@ import time
 import torchvision.transforms as v2
 from collections import Counter
 import random
-
+from sklearn.metrics import confusion_matrix
 #Fix for h5py sometimes not being able to open files in parallel
 os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
 import h5py
@@ -69,6 +69,8 @@ class networkTraining():
             total_images += len(data)
 
             print(f"Train Epoch: {epoch} [{total_images}/{len(train_loader.dataset)}]")
+            
+            return
 
         self.history.setdefault(epoch, {})["train_loss"] = loss_total / batch_idx
         self.history[epoch]["train_accuracy"] = correct / len(train_loader.dataset)
@@ -111,6 +113,11 @@ class networkTraining():
         self.history[epoch][f"{name}_time"] = time.time() - t
         
         print(f"\n{name}: Average loss: {test_loss / batches:.4f}, Accuracy: {correct}/{len(test_loader.dataset)} ({correct / len(test_loader.dataset):.2%}%)\n")
+        
+        #Confusion matrix
+        conf_matrix = confusion_matrix(target.cpu(), pred.cpu())
+        print(f"Confusion matrix for {name}:")
+        print(conf_matrix)
 
         
     def save_model(self, path, model_name="history/model"):
