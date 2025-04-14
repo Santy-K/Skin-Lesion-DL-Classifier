@@ -44,16 +44,15 @@ def AlexNetModel(num_classes=3):
     for param in model.parameters():
         param.requires_grad = False
     # Change the last layer to match the number of classes
-    fc_layer_count = model.classifier[1].in_features
-    print(f"Number of layers in the classifier: {fc_layer_count}")
-    model.classifier[1] = nn.Sequential(
-        nn.BatchNorm1d(fc_layer_count),
-        nn.Linear(fc_layer_count, 120),
+    in_features = model.classifier[1].in_features
+    model.classifier = nn.Sequential(
+        nn.BatchNorm1d(in_features),
+        nn.Linear(in_features, 120),
         nn.ReLU(),
-        nn.Linear(120, 84),
+        nn.Linear(120, 85),
         nn.ReLU(),
         nn.Dropout(0.2),
-        nn.Linear(84, num_classes)
+        nn.Linear(85, num_classes)
     )
 
     return model
