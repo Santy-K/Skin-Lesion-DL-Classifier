@@ -42,6 +42,7 @@ def main():
     
     #Read Data
     data_name = "data/all_224.h5"
+    
     data = HDF5Dataset(data_name)
     print("Data size: ", len(data))
     #Print class breakdown
