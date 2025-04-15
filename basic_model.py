@@ -25,16 +25,19 @@ def main():
         v2.ToTensor()
     ])
 
+    mean_vars =[0.5, 0.5, 0.5]
+    std_vars=[0.25, 0.25, 0.25]
+
     transforms_train = v2.Compose([
-        #v2.RandomResizedCrop(scale=(0.8, 1.0), size=image_scale,ratio=(0.9, 1.1)),
-        #v2.RandomAffine(degrees=90, shear=20),
-        v2.RandomHorizontalFlip(),
-        v2.RandomVerticalFlip(),
-        v2.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.2),
+        v2.RandomResizedCrop(scale=(0.8, 1.0), size=image_scale,ratio=(0.9, 1.1)),
+        v2.RandomHorizontalFlip(p=0.5),
+        v2.RandomVerticalFlip(p=0.5),
+        v2.RandomRotation(degrees=45),
+
+        v2.ColorJitter(brightness=0.15, contrast=0.15, saturation=0.15, hue=0.05),
         v2.ToImage(),
         v2.ToDtype(torch.float32, scale=True),
-        #v2.GaussianNoise(mean=0.0, sigma=0.2),
-        v2.Normalize(mean=[0.5, 0.5, 0.5], std=[0.25, 0.25, 0.25]),
+        v2.Normalize(mean=mean_vars, std=std_vars),
         v2.ToTensor()
     ])
 
